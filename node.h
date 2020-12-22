@@ -12,7 +12,7 @@ class Mul;
 class Dif;
 class Brackets;
 using IVisitorPtr = std::shared_ptr<IVisitor>;
-using INodePtr    = std::unique_ptr<INode>;
+using INodePtr    = std::shared_ptr<INode>;
 
 
 enum class NodeType {
@@ -70,7 +70,7 @@ private:
 
 class Brackets : public INode {
 public:
-    Brackets(INodePtr&& node);
+    Brackets(INodePtr node);
     int accept(IVisitorPtr visitor) override;
     NodeType getType() const override;
     INodePtr getNode();
@@ -82,20 +82,20 @@ private:
 class IBinaryOperation : public INode {
 public:
     IBinaryOperation() = default;
-    IBinaryOperation(INodePtr&& leftNode, INodePtr&& rightNode);
+    IBinaryOperation(INodePtr leftNode, INodePtr rightNode);
     INodePtr getLeftNode();
     INodePtr getRightNode();
 private:
     INodePtr m_leftNode  = nullptr;
     INodePtr m_rightNode = nullptr;
 };
-using IBinaryOperationPtr = std::unique_ptr<IBinaryOperation>;
+using IBinaryOperationPtr = std::shared_ptr<IBinaryOperation>;
 
 
 class Sum : public IBinaryOperation {
 public:
     Sum() = default;
-    Sum(INodePtr&& leftNode, INodePtr&& rightNode);
+    Sum(INodePtr leftNode, INodePtr rightNode);
     int accept(IVisitorPtr visitor) override;
     NodeType getType() const override;
 };
@@ -104,7 +104,7 @@ public:
 class Dif : public IBinaryOperation {
 public:
     Dif() = default;
-    Dif(INodePtr&& leftNode, INodePtr&& rightNode);
+    Dif(INodePtr leftNode, INodePtr rightNode);
     int accept(IVisitorPtr visitor) override;
     NodeType getType() const override;
 };
@@ -113,7 +113,7 @@ public:
 class Mul : public IBinaryOperation {
 public:
     Mul() = default;
-    Mul(INodePtr&& leftNode, INodePtr&& rightNode);
+    Mul(INodePtr leftNode, INodePtr rightNode);
     int accept(IVisitorPtr visitor) override;
     NodeType getType() const override;
 };
@@ -122,7 +122,7 @@ public:
 class Div : public IBinaryOperation {
 public:
     Div() = default;
-    Div(INodePtr&& leftNode, INodePtr&& rightNode);
+    Div(INodePtr leftNode, INodePtr rightNode);
     int accept(IVisitorPtr visitor) override;
     NodeType getType() const override;
 };
@@ -130,7 +130,7 @@ public:
 
 template <typename T, typename... Args>
 INodePtr makeNode(Args... args) {
-    return std::make_unique<T>(std::move(args)...);
+    return std::make_shared<T>(std::move(args)...);
 }
 
 template <typename T>

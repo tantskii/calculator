@@ -15,11 +15,13 @@ int main() {
         getline(std::cin, input);
         std::string_view input_view(input);
         parser.parse(input_view);
-        INodePtr root = parser.build();
+        INodePtr rootNode = parser.build();
 
-//        int result = root->accept(calculation);
-//        std::cout << result << std::endl;
-        root->accept(print);
+        int result = rootNode->accept(calculation);
+        std::cout << "Result: " << result << std::endl;
+
+        std::cout << "Lexems: " << std::endl;
+        rootNode->accept(print);
     } catch (std::exception& ex) {
         std::cout << ex.what() << std::endl;
         return 1;

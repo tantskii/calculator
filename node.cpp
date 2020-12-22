@@ -1,28 +1,28 @@
 #include "node.h"
 
-IBinaryOperation::IBinaryOperation(INodePtr&& leftNode, INodePtr&& rightNode)
+IBinaryOperation::IBinaryOperation(INodePtr leftNode, INodePtr rightNode)
     : m_leftNode(std::move(leftNode))
     , m_rightNode(std::move(rightNode))
 {}
 
-INodePtr IBinaryOperation::getLeftNode()  { return std::move(m_leftNode); }
-INodePtr IBinaryOperation::getRightNode() { return std::move(m_rightNode); }
+INodePtr IBinaryOperation::getLeftNode()  { return m_leftNode; }
+INodePtr IBinaryOperation::getRightNode() { return m_rightNode; }
 int Val::getValue() { return m_value; }
-INodePtr Brackets::getNode() { return std::move(m_node); }
+INodePtr Brackets::getNode() { return m_node; }
 
 
 // Node ctors start //
 Val::Val(int value)
     : m_value(value) {}
-Brackets::Brackets(INodePtr&& otherNode)
+Brackets::Brackets(INodePtr otherNode)
     : m_node(std::move(otherNode)) {}
-Sum::Sum(INodePtr&& leftNode, INodePtr&& rightNode)
+Sum::Sum(INodePtr leftNode, INodePtr rightNode)
     : IBinaryOperation(std::move(leftNode), std::move(rightNode)) {}
-Dif::Dif(INodePtr&& leftNode, INodePtr&& rightNode)
+Dif::Dif(INodePtr leftNode, INodePtr rightNode)
     : IBinaryOperation(std::move(leftNode), std::move(rightNode)) {}
-Mul::Mul(INodePtr&& leftNode, INodePtr&& rightNode)
+Mul::Mul(INodePtr leftNode, INodePtr rightNode)
     : IBinaryOperation(std::move(leftNode), std::move(rightNode)) {}
-Div::Div(INodePtr&& leftNode, INodePtr&& rightNode)
+Div::Div(INodePtr leftNode, INodePtr rightNode)
     : IBinaryOperation(std::move(leftNode), std::move(rightNode)) {}
 // Node ctors end //
 

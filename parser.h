@@ -26,11 +26,11 @@ class ICommandHandler {
 public:
     virtual ~ICommandHandler() = default;
     virtual void parse(Parser * parser, std::string_view&) = 0;
-    static std::unique_ptr<ICommandHandler> getNextNodeHandler(std::string_view);
+    static std::shared_ptr<ICommandHandler> getNextNodeHandler(std::string_view);
 protected:
     void remove_spaces(std::string_view&);
 };
-using ICommandHandlerPtr = std::unique_ptr<ICommandHandler>;
+using ICommandHandlerPtr = std::shared_ptr<ICommandHandler>;
 
 
 class Parser {

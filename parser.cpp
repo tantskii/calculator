@@ -68,7 +68,7 @@ ICommandHandlerPtr ICommandHandler::getNextNodeHandler(std::string_view view) {
     char next_symbol = view[0];
     switch (next_symbol) {
         case '(':
-            handler = std::make_unique<BracketsHandler>();
+            handler = std::make_shared<BracketsHandler>();
             break;
         case '0':
         case '1':
@@ -80,13 +80,13 @@ ICommandHandlerPtr ICommandHandler::getNextNodeHandler(std::string_view view) {
         case '7':
         case '8':
         case '9':
-            handler = std::make_unique<ValueHandler>();
+            handler = std::make_shared<ValueHandler>();
             break;
         case '+':
         case '-':
         case '*':
         case '/':
-            handler = std::make_unique<BinaryOperationHandler>();
+            handler = std::make_shared<BinaryOperationHandler>();
             break;
         default:
             std::string error_message_2("Unexpected symbol: ");
@@ -122,7 +122,7 @@ void ValueHandler::parse(Parser * parser, std::string_view& view) {
     
     INodePtr node = makeNode<Val>(value);
     parser->addNode(std::move(node));
-    parser->setHandler(std::make_unique<BinaryOperationHandler>());
+    parser->setHandler(std::make_shared<BinaryOperationHandler>());
 }
 
 
@@ -132,16 +132,16 @@ void BinaryOperationHandler::parse(Parser * parser, std::string_view& view) {
     IBinaryOperationPtr node = nullptr;
     switch (ch) {
         case '+':
-            node = std::make_unique<Sum>();
+            node = std::make_shared<Sum>();
             break;
         case '-':
-            node = std::make_unique<Dif>();
+            node = std::make_shared<Dif>();
             break;
         case '*':
-            node = std::make_unique<Mul>();
+            node = std::make_shared<Mul>();
             break;
         case '/':
-            node = std::make_unique<Div>();
+            node = std::make_shared<Div>();
             break;
         default:
             std::string error_message("Expected one of [+, -, *, /], but got: ");
@@ -190,11 +190,13 @@ void BracketsHandler::parse(Parser * parser, std::string_view& view) {
     }
 
     std::string_view between_brackets = view.substr(1, i - 1);
+    remove_spaces(between_brackets);
     Parser local_parser;
     local_parser.parse(between_brackets);
     INodePtr node = makeNode<Brackets>(local_parser.build());
+    parser->addNode(std::move(node));
+    parser->setHandler(std::make_shared<BinaryOperationHandler>());
+
     view.remove_prefix(i + 1);
     remove_spaces(view);
-    parser->addNode(std::move(node));
-    parser->setHandler(std::make_unique<BinaryOperationHandler>());
 }
