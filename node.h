@@ -10,6 +10,7 @@ class Sum;
 class Div;
 class Mul;
 class Dif;
+class Brackets;
 using IVisitorPtr = std::shared_ptr<IVisitor>;
 using INodePtr    = std::unique_ptr<INode>;
 
@@ -19,12 +20,14 @@ enum class NodeType {
     Sum,
     Dif,
     Mul,
-    Div
+    Div,
+    Brackets
 };
 
 
 static const std::map<NodeType, size_t> nodePriority = {
     {NodeType::Val,  0},
+    {NodeType::Brackets, 0},
     {NodeType::Sum, 10},
     {NodeType::Dif, 10},
     {NodeType::Mul, 20},
@@ -40,6 +43,7 @@ public:
     virtual int visit(Div& node) = 0;
     virtual int visit(Mul& node) = 0;
     virtual int visit(Dif& node) = 0;
+    virtual int visit(Brackets& node) = 0;
     virtual IVisitorPtr getptr() = 0;
 };
 
@@ -64,14 +68,23 @@ private:
 };
 
 
+class Brackets : public INode {
+public:
+    Brackets(INodePtr&& node);
+    int accept(IVisitorPtr visitor) override;
+    NodeType getType() const override;
+    INodePtr getNode();
+private:
+    INodePtr m_node;
+};
+
+
 class IBinaryOperation : public INode {
 public:
     IBinaryOperation() = default;
     IBinaryOperation(INodePtr&& leftNode, INodePtr&& rightNode);
     INodePtr getLeftNode();
     INodePtr getRightNode();
-    void setLeftNode(INodePtr node);
-    void setRightNode(INodePtr node);
 private:
     INodePtr m_leftNode  = nullptr;
     INodePtr m_rightNode = nullptr;

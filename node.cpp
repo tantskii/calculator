@@ -7,13 +7,15 @@ IBinaryOperation::IBinaryOperation(INodePtr&& leftNode, INodePtr&& rightNode)
 
 INodePtr IBinaryOperation::getLeftNode()  { return std::move(m_leftNode); }
 INodePtr IBinaryOperation::getRightNode() { return std::move(m_rightNode); }
-void IBinaryOperation::setLeftNode (INodePtr node) { m_leftNode  = std::move(node); }
-void IBinaryOperation::setRightNode(INodePtr node) { m_rightNode = std::move(node); }
 int Val::getValue() { return m_value; }
+INodePtr Brackets::getNode() { return std::move(m_node); }
 
 
 // Node ctors start //
-Val::Val(int value) : m_value(value) {}
+Val::Val(int value)
+    : m_value(value) {}
+Brackets::Brackets(INodePtr&& otherNode)
+    : m_node(std::move(otherNode)) {}
 Sum::Sum(INodePtr&& leftNode, INodePtr&& rightNode)
     : IBinaryOperation(std::move(leftNode), std::move(rightNode)) {}
 Dif::Dif(INodePtr&& leftNode, INodePtr&& rightNode)
@@ -31,6 +33,7 @@ int Sum::accept (IVisitorPtr visitor) { return visitor->visit(*this); }
 int Dif::accept (IVisitorPtr visitor) { return visitor->visit(*this); }
 int Mul::accept (IVisitorPtr visitor) { return visitor->visit(*this); }
 int Div::accept (IVisitorPtr visitor) { return visitor->visit(*this); }
+int Brackets::accept (IVisitorPtr visitor) { return visitor->visit(*this); }
 // Node accept end //
 
 
@@ -40,6 +43,7 @@ NodeType Sum::getType() const { return NodeType::Sum; }
 NodeType Dif::getType() const { return NodeType::Dif; }
 NodeType Mul::getType() const { return NodeType::Mul; }
 NodeType Div::getType() const { return NodeType::Div; }
+NodeType Brackets::getType() const { return NodeType::Brackets; }
 // Node getType end //
 
 

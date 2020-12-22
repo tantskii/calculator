@@ -192,7 +192,7 @@ void BracketsHandler::parse(Parser * parser, std::string_view& view) {
     std::string_view between_brackets = view.substr(1, i - 1);
     Parser local_parser;
     local_parser.parse(between_brackets);
-    INodePtr node = local_parser.build();
+    INodePtr node = makeNode<Brackets>(local_parser.build());
     view.remove_prefix(i + 1);
     remove_spaces(view);
     parser->addNode(std::move(node));
