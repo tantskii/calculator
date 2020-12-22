@@ -1,9 +1,6 @@
 #include "parser.h"
 
-Parser::Parser()
-    : m_handler(std::make_unique<ValueHandler>())
-{}
-
+#include <memory>
 
 void Parser::setHandler(ICommandHandlerPtr handler) {
     m_handler = std::move(handler);
@@ -11,7 +8,8 @@ void Parser::setHandler(ICommandHandlerPtr handler) {
 
 
 void Parser::parse(std::string_view& view) {
-    while (not view.empty()) {
+    m_handler = ICommandHandler::getNextNodeHandler(view);
+    while (!view.empty()) {
         m_handler->parse(this, view);
     }
 }
@@ -65,6 +63,39 @@ INodePtr Parser::build() {
     return root_node;
 }
 
+ICommandHandlerPtr ICommandHandler::getNextNodeHandler(std::string_view view) {
+    ICommandHandlerPtr handler = nullptr;
+    char next_symbol = view[0];
+    switch (next_symbol) {
+        case '(':
+            handler = std::make_unique<BracketsHandler>();
+            break;
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            handler = std::make_unique<ValueHandler>();
+            break;
+        case '+':
+        case '-':
+        case '*':
+        case '/':
+            handler = std::make_unique<BinaryOperationHandler>();
+            break;
+        default:
+            std::string error_message_2("Unexpected symbol: ");
+            error_message_2 += next_symbol;
+            throw std::runtime_error(error_message_2);
+    }
+    return handler;
+}
+
 
 void ICommandHandler::remove_spaces(std::string_view& view) {
     size_t pos = view.find_first_not_of(' ');
@@ -85,7 +116,6 @@ void ValueHandler::parse(Parser * parser, std::string_view& view) {
     } catch (std::invalid_argument& ex) {
         throw std::runtime_error("Expected integer number but got '" + str_value + "'");
     }
-    
 
     view.remove_prefix(pos);
     remove_spaces(view);
@@ -114,15 +144,57 @@ void BinaryOperationHandler::parse(Parser * parser, std::string_view& view) {
             node = std::make_unique<Div>();
             break;
         default:
-            throw std::runtime_error("Expected one of [+, -, *, /], but got integer value");
+            std::string error_message("Expected one of [+, -, *, /], but got: ");
+            error_message += ch;
+            throw std::runtime_error(error_message);
             break;
     }
     
     view.remove_prefix(1);
     remove_spaces(view);
     parser->addNode(std::move(node));
-    parser->setHandler(std::make_unique<ValueHandler>());
+    parser->setHandler(ICommandHandler::getNextNodeHandler(view));
 }
 
 
+void BracketsHandler::parse(Parser * parser, std::string_view& view) {
+    size_t bracket_counter = 1;
+    bool found_close_bracket = false;
+    char ch;
+    size_t i = 0;
 
+    while (!found_close_bracket && i < view.size()) {
+        i++;
+        ch = view[i];
+
+        switch (ch) {
+            case '(':
+                ++bracket_counter;
+                break;
+            case ')':
+                --bracket_counter;
+                break;
+            default:
+                break;
+        }
+
+        found_close_bracket = bracket_counter == 0;
+    }
+
+    if (!found_close_bracket) {
+        throw std::runtime_error("Incorrect number of brackets");
+    }
+
+    if (i == 1) {
+        throw std::runtime_error("Expression '()' is incorrect");
+    }
+
+    std::string_view between_brackets = view.substr(1, i - 1);
+    Parser local_parser;
+    local_parser.parse(between_brackets);
+    INodePtr node = local_parser.build();
+    view.remove_prefix(i + 1);
+    remove_spaces(view);
+    parser->addNode(std::move(node));
+    parser->setHandler(std::make_unique<BinaryOperationHandler>());
+}

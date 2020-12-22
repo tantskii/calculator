@@ -19,7 +19,7 @@ enum class NodeType {
     Sum,
     Dif,
     Mul,
-    Div,
+    Div
 };
 
 
@@ -68,8 +68,6 @@ class IBinaryOperation : public INode {
 public:
     IBinaryOperation() = default;
     IBinaryOperation(INodePtr&& leftNode, INodePtr&& rightNode);
-    virtual ~IBinaryOperation() = default;
-    virtual int accept(IVisitorPtr visitor) = 0;
     INodePtr getLeftNode();
     INodePtr getRightNode();
     void setLeftNode(INodePtr node);

@@ -26,6 +26,7 @@ class ICommandHandler {
 public:
     virtual ~ICommandHandler() = default;
     virtual void parse(Parser * parser, std::string_view&) = 0;
+    static std::unique_ptr<ICommandHandler> getNextNodeHandler(std::string_view);
 protected:
     void remove_spaces(std::string_view&);
 };
@@ -34,7 +35,7 @@ using ICommandHandlerPtr = std::unique_ptr<ICommandHandler>;
 
 class Parser {
 public:
-    Parser();
+    Parser() = default;
     void setHandler(ICommandHandlerPtr handler);
     void parse(std::string_view&);
     void addNode(IBinaryOperationPtr);
@@ -54,6 +55,12 @@ public:
 
 
 class BinaryOperationHandler : public ICommandHandler {
+public:
+    void parse(Parser * parser, std::string_view&) override;
+};
+
+
+class BracketsHandler : public ICommandHandler {
 public:
     void parse(Parser * parser, std::string_view&) override;
 };
