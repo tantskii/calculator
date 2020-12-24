@@ -27,8 +27,10 @@ void Parser::addNode(IBinaryOperationPtr node) {
 }
 
 
-INodePtr Parser::build() {
-    while (m_nodes.size() > 1) {
+INodePtr Parser::build(std::string_view& view) {
+	parse(view);
+
+    while (!m_queue.empty()) {
         BinaryOperationPosition position = m_queue.top();
        
         INodePtr prev_val_node = std::move(*std::prev(position.iter));
@@ -60,8 +62,49 @@ INodePtr Parser::build() {
         m_queue.pop();
     }
     INodePtr root_node = std::move(*m_nodes.begin());
+    m_nodes.clear();
+	m_handler = nullptr;
     return root_node;
 }
+
+
+void Parser::define(const std::string& alias, std::string_view meaning) {
+	INodePtr node = build(meaning);
+	switch (node->getType()) {
+		case NodeType::Val:
+			break;
+		default:
+			throw std::runtime_error("[Error][Parser] Parser::define can define only Values.");
+	}
+
+	m_aliases[alias] = node;
+}
+
+
+void Parser::undefine(const std::string& alias) {
+	m_aliases.erase(alias);
+}
+
+
+const std::string& Parser::getSpecSymbols() const {
+	return m_spec_symbols;
+}
+
+
+std::optional<INodePtr> Parser::findAlias(const std::string& alias) {
+	auto it = m_aliases.find(alias);
+
+	if (it == m_aliases.end()) {
+		return std::nullopt;
+	} else {
+		return it->second;
+	}
+}
+
+Parser::Parser(Parser& other)
+	: m_aliases(other.m_aliases)
+{}
+
 
 ICommandHandlerPtr ICommandHandler::getNextNodeHandler(std::string_view view) {
     ICommandHandlerPtr handler = nullptr;
@@ -89,9 +132,7 @@ ICommandHandlerPtr ICommandHandler::getNextNodeHandler(std::string_view view) {
             handler = std::make_shared<BinaryOperationHandler>();
             break;
         default:
-            std::string error_message_2("Unexpected symbol: ");
-            error_message_2 += next_symbol;
-            throw std::runtime_error(error_message_2);
+        	handler = std::make_shared<AliasHandler>();
     }
     return handler;
 }
@@ -114,7 +155,7 @@ void ValueHandler::parse(Parser * parser, std::string_view& view) {
     try {
         value = std::stoi(str_value);
     } catch (std::invalid_argument& ex) {
-        throw std::runtime_error("Expected integer number but got '" + str_value + "'");
+        throw std::runtime_error("[Error][ValueHandler] Expected integer number but got '" + str_value + "'");
     }
 
     view.remove_prefix(pos);
@@ -144,7 +185,7 @@ void BinaryOperationHandler::parse(Parser * parser, std::string_view& view) {
             node = std::make_shared<Div>();
             break;
         default:
-            std::string error_message("Expected one of [+, -, *, /], but got: ");
+            std::string error_message("[Error][BinaryOperationHandler] Expected one of [+, -, *, /], but got: ");
             error_message += ch;
             throw std::runtime_error(error_message);
             break;
@@ -153,7 +194,7 @@ void BinaryOperationHandler::parse(Parser * parser, std::string_view& view) {
     view.remove_prefix(1);
     remove_spaces(view);
     parser->addNode(std::move(node));
-    parser->setHandler(ICommandHandler::getNextNodeHandler(view));
+    parser->setHandler(getNextNodeHandler(view));
 }
 
 
@@ -182,21 +223,37 @@ void BracketsHandler::parse(Parser * parser, std::string_view& view) {
     }
 
     if (!found_close_bracket) {
-        throw std::runtime_error("Incorrect number of brackets");
+        throw std::runtime_error("[Error][BracketsHandler] Incorrect number of brackets");
     }
 
     if (i == 1) {
-        throw std::runtime_error("Expression '()' is incorrect");
+        throw std::runtime_error("[Error][BracketsHandler] Expression '()' is incorrect");
     }
 
+	Parser local_parser(*parser);
     std::string_view between_brackets = view.substr(1, i - 1);
     remove_spaces(between_brackets);
-    Parser local_parser;
-    local_parser.parse(between_brackets);
-    INodePtr node = makeNode<Brackets>(local_parser.build());
+    INodePtr node = makeNode<Brackets>(local_parser.build(between_brackets));
     parser->addNode(std::move(node));
     parser->setHandler(std::make_shared<BinaryOperationHandler>());
 
     view.remove_prefix(i + 1);
     remove_spaces(view);
+}
+
+
+void AliasHandler::parse(Parser* parser, std::string_view& view) {
+	size_t pos = view.find_first_not_of(parser->getSpecSymbols());
+	std::optional<INodePtr> opt_node = parser->findAlias(std::string(view.substr(0, pos + 1)));
+
+	if (opt_node.has_value()) {
+		parser->addNode(opt_node.value());
+		parser->setHandler(std::make_shared<BinaryOperationHandler>());
+		view.remove_prefix(pos + 1);
+		remove_spaces(view);
+	} else {
+		std::string error_message("[Error][ICommandHandler] Unexpected symbol: ");
+		error_message += view[0];
+		throw std::runtime_error(error_message);
+	}
 }

@@ -26,7 +26,7 @@ class ICommandHandler {
 public:
     virtual ~ICommandHandler() = default;
     virtual void parse(Parser * parser, std::string_view&) = 0;
-    static std::shared_ptr<ICommandHandler> getNextNodeHandler(std::string_view);
+	static std::shared_ptr<ICommandHandler> getNextNodeHandler(std::string_view);
 protected:
     void remove_spaces(std::string_view&);
 };
@@ -36,15 +36,26 @@ using ICommandHandlerPtr = std::shared_ptr<ICommandHandler>;
 class Parser {
 public:
     Parser() = default;
+    Parser(Parser& other);
     void setHandler(ICommandHandlerPtr handler);
-    void parse(std::string_view&);
     void addNode(IBinaryOperationPtr);
     void addNode(INodePtr);
-    INodePtr build();
+
+    void define(const std::string& alias, std::string_view meaning);
+    void undefine(const std::string& alias);
+    std::optional<INodePtr> findAlias(const std::string& alias);
+
+    INodePtr build(std::string_view&);
+
+    const std::string& getSpecSymbols() const;
 private:
+	void parse(std::string_view&);
+
     ICommandHandlerPtr m_handler;
     std::priority_queue<BinaryOperationPosition> m_queue;
     std::list<INodePtr> m_nodes;
+    std::map<std::string, INodePtr> m_aliases;
+    const std::string m_spec_symbols = "0123456789+-*/()";
 };
 
 
@@ -63,6 +74,12 @@ public:
 class BracketsHandler : public ICommandHandler {
 public:
     void parse(Parser * parser, std::string_view&) override;
+};
+
+
+class AliasHandler : public ICommandHandler {
+public:
+	void parse(Parser * parser, std::string_view&) override;
 };
 
 
