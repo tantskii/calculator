@@ -4,21 +4,21 @@
 
 
 class Calculation : public IVisitor {
-    int visit(Val& node) override;
-    int visit(Sum& node) override;
-    int visit(Div& node) override;
-    int visit(Mul& node) override;
-    int visit(Dif& node) override;
-    int visit(Brackets& node) override;
-    std::shared_ptr<IVisitor> getptr() override;
+	int64_t visit(Val& node) override;
+	int64_t visit(Sum& node) override;
+	int64_t visit(Div& node) override;
+	int64_t visit(Mul& node) override;
+	int64_t visit(Dif& node) override;
+	int64_t visit(Brackets& node) override;
+	std::shared_ptr<IVisitor> getptr() override;
 };
 
 class Print : public IVisitor {
-    int visit(Val& node) override;
-    int visit(Sum& node) override;
-    int visit(Div& node) override;
-    int visit(Mul& node) override;
-    int visit(Dif& node) override;
-    int visit(Brackets& node) override;
-    std::shared_ptr<IVisitor> getptr() override;
+	int64_t visit(Val& node) override;
+	int64_t visit(Sum& node) override;
+	int64_t visit(Div& node) override;
+	int64_t visit(Mul& node) override;
+	int64_t visit(Dif& node) override;
+	int64_t visit(Brackets& node) override;
+	std::shared_ptr<IVisitor> getptr() override;
 };
