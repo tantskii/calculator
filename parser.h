@@ -1,6 +1,7 @@
 #pragma once
 
 #include "node.h"
+#include "helpers.h"
 #include <utility>
 #include <memory>
 #include <string_view>
@@ -26,8 +27,6 @@ public:
 	virtual ~ICommandHandler() = default;
 	virtual void parse(Parser * parser, std::string_view&) = 0;
 	static std::shared_ptr<ICommandHandler> getNextNodeHandler(std::string_view);
-protected:
-	void remove_spaces(std::string_view&);
 };
 using ICommandHandlerPtr = std::shared_ptr<ICommandHandler>;
 

@@ -96,13 +96,6 @@ ICommandHandlerPtr ICommandHandler::getNextNodeHandler(std::string_view view) {
 }
 
 
-void ICommandHandler::remove_spaces(std::string_view& view) {
-	size_t pos = view.find_first_not_of(' ');
-	pos = pos > view.size() ? view.size() : pos;
-	view.remove_prefix(pos);
-}
-
-
 void ValueHandler::parse(Parser * parser, std::string_view& view) {
 	int64_t value;
 	size_t start_pos = view[0] == '-' ? 1 : 0;
@@ -116,8 +109,8 @@ void ValueHandler::parse(Parser * parser, std::string_view& view) {
 		throw std::runtime_error("Expected integer number but got '" + str_value + "'");
 	}
 
-	view.remove_prefix(pos);
-	remove_spaces(view);
+	help::removePrefix(view, pos);
+	help::removeSpaces(view);
 
 	INodePtr node = makeNode<Val>(value);
 	parser->addNode(std::move(node));
@@ -148,35 +141,42 @@ void BinaryOperationHandler::parse(Parser * parser, std::string_view& view) {
 			throw std::runtime_error(error_message);
 	}
 
-	view.remove_prefix(1);
-	remove_spaces(view);
+	help::removePrefix(view, 1);
+	help::removeSpaces(view);
 	parser->addNode(std::move(node));
 	parser->setHandler(ICommandHandler::getNextNodeHandler(view));
 }
 
 
 void BracketsHandler::parse(Parser * parser, std::string_view& view) {
-	size_t bracket_counter = 1;
+	size_t bracket_counter = 0;
 	bool found_close_bracket = false;
 	char ch;
 	size_t i = 0;
 
+	if (view[0] != '(') {
+		throw std::runtime_error("BracketsHandler can not parse expression which does not start with (");
+	}
+
 	while (!found_close_bracket && i < view.size()) {
-		i++;
 		ch = view[i];
 
 		switch (ch) {
 			case '(':
-			++bracket_counter;
-			break;
-		case ')':
-			--bracket_counter;
-			break;
-		default:
-			break;
+				++bracket_counter;
+				break;
+			case ')':
+				--bracket_counter;
+				break;
+			default:
+				break;
 		}
 
 		found_close_bracket = bracket_counter == 0;
+
+		if (!found_close_bracket) {
+			i++;
+		}
 	}
 
 	if (!found_close_bracket) {
@@ -188,13 +188,14 @@ void BracketsHandler::parse(Parser * parser, std::string_view& view) {
 	}
 
 	std::string_view between_brackets = view.substr(1, i - 1);
-	remove_spaces(between_brackets);
+	help::removeSpaces(between_brackets);
+
 	Parser local_parser;
 	local_parser.parse(between_brackets);
 	INodePtr node = makeNode<Brackets>(local_parser.build());
 	parser->addNode(std::move(node));
 	parser->setHandler(std::make_shared<BinaryOperationHandler>());
 
-	view.remove_prefix(i + 1);
-	remove_spaces(view);
+	help::removePrefix(view, i + 1);
+	help::removeSpaces(view);
 }
